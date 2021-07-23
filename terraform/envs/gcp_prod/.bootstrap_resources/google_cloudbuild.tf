@@ -6,7 +6,7 @@ module "google_cloudbuild_tf_plan_for_pr" {
   terraform_exec_dir         = "terraform/envs/gcp_prod"
   github = {
     owner = "hkak03key"
-    name  = "my-samples"
+    name  = "my-examples"
     pull_request = {
       branch = ".*"
     }
@@ -26,7 +26,7 @@ module "google_cloudbuild_tf_apply_main_branch" {
   terraform_exec_dir         = "terraform/envs/gcp_prod"
   github = {
     owner = "hkak03key"
-    name  = "my-samples"
+    name  = "my-examples"
     push = {
       branch = "^main$"
     }
