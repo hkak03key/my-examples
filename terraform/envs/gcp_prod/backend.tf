@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket = "hkak03key-samples-prod-terraform"
+    bucket = "hkak03key-examples-prod-terraform"
     prefix = "tfstate"
   }
 }
