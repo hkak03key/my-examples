@@ -9,7 +9,7 @@ resource "google_cloud_tasks_queue" "this" {
 
 #---------------
 # enqueuer
-resource "google_project_iam_binding" "this" {
+resource "google_project_iam_binding" "cloudtasks_enqueuer" {
   project = local.project_id
   role    = "roles/cloudtasks.enqueuer"
 
