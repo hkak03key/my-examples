@@ -1,4 +1,4 @@
 provider "google" {
-  project = "hkak03key-examples-prod"
-  region  = "us-central1"
+  project = local.project_name
+  region  = local.project_region
 }
