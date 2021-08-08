@@ -24,7 +24,7 @@ def main(request):
 
     if not is_final:
         res = gcp.create_pagenate_task(
-            (datetime.utcnow() + timedelta(minutes=1))).isoformat()
+            (datetime.utcnow() + timedelta(minutes=1)).isoformat()
         )
     pprint(res)
 
