@@ -14,7 +14,6 @@ resource "google_storage_bucket" "terraform" {
     }
   }
 
-
   lifecycle {
     prevent_destroy = true
   }

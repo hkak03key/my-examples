@@ -5,7 +5,6 @@ resource "google_project_service" "services" {
     "cloudfunctions.googleapis.com",
     "cloudscheduler.googleapis.com",
     "cloudtasks.googleapis.com",
-    "iam.googleapis.com",
     "sheets.googleapis.com",
   ])
 
