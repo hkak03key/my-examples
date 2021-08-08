@@ -6,14 +6,13 @@
 data "archive_file" "gcf_codes" {
   for_each = toset(
     [
-      # TODO: enum to upload file or dir
-      "scripts/printenv.py",
+      # TODO: enum to upload dir
+      "scripts/printenv",
     ]
   )
 
   type        = "zip"
-  source_file = trimsuffix(each.value, "/") == each.value ? "${path.module}/${each.value}" : null
-  source_dir  = trimsuffix(each.value, "/") != each.value ? "${path.module}/${each.value}" : null
+  source_dir  = "${path.module}/${each.value}"
   output_path = "${path.module}/.temp/${each.value}.zip"
 }
 
@@ -44,8 +43,8 @@ resource "google_cloudfunctions_function" "this" {
 
   available_memory_mb   = 128
   service_account_email = google_service_account.this.email
-  source_archive_bucket = google_storage_bucket_object.gcf_codes["scripts/printenv.py"].bucket
-  source_archive_object = google_storage_bucket_object.gcf_codes["scripts/printenv.py"].name
+  source_archive_bucket = google_storage_bucket_object.gcf_codes["scripts/printenv"].bucket
+  source_archive_object = google_storage_bucket_object.gcf_codes["scripts/printenv"].name
   trigger_http          = true
   entry_point           = "main"
 }
