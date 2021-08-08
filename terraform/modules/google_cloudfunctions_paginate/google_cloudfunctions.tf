@@ -57,10 +57,15 @@ resource "google_cloudfunctions_function_iam_binding" "this" {
   cloud_function = google_cloudfunctions_function.this.name
 
   role = "roles/cloudfunctions.invoker"
-  members = [
+  members = flatten([
     # TODO: enum invokers
-    google_service_account.this.name,
-  ]
+    formatlist(
+      "serviceAccount:%s",
+      [
+        google_service_account.this.email,
+      ]
+    ),
+  ])
 
   depends_on = [
     google_cloudfunctions_function.this,
