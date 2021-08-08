@@ -8,7 +8,8 @@ module "google_cloudbuild_tf_plan_for_pr" {
     owner = "hkak03key"
     name  = "my-examples"
     pull_request = {
-      branch = ".*"
+      branch          = ".*"
+      comment_control = "COMMENTS_ENABLED_FOR_EXTERNAL_CONTRIBUTORS_ONLY"
     }
   }
   proc = "plan"
@@ -38,4 +39,11 @@ module "google_cloudbuild_tf_apply_main_branch" {
   ]
 }
 
+resource "google_project_iam_binding" "cloudbuild" {
+  project = local.project_id
+  role    = "roles/admin"
 
+  members = [
+    "serviceAccount:${local.project_id}@cloudbuild.gserviceaccount.com",
+  ]
+}
