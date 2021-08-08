@@ -19,7 +19,7 @@ def main(request):
     request_json = request.get_json(silent=True)
     pprint({"request_json": request_json})
 
-    is_final = False if not request_json.get("is_final") else True
+    is_final = False if request_json.get("is_final") == False else True
     print("is_final:", is_final)
 
     if not is_final:

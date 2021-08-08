@@ -49,7 +49,7 @@ resource "google_cloudfunctions_function" "this" {
   entry_point           = "main"
 
   environment_variables = {
-    FUNCTION_REGION  = google_cloudfunctions_function.this.region
+    FUNCTION_REGION  = local.region
     FUNCTION_INVOKER = google_service_account.this.email
   }
 }
