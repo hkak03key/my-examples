@@ -47,6 +47,11 @@ resource "google_cloudfunctions_function" "this" {
   source_archive_object = google_storage_bucket_object.gcf_codes["scripts/paginate"].name
   trigger_http          = true
   entry_point           = "main"
+
+  environment_variables = {
+    FUNCTION_REGION  = local.region
+    FUNCTION_INVOKER = google_service_account.this.email
+  }
 }
 
 #---------------
