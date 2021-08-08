@@ -7,7 +7,7 @@ from google.cloud import tasks_v2 as tasks
 from google.protobuf import timestamp_pb2
 
 
-PROJECT_ID = google.auth.default()
+_, PROJECT_ID = google.auth.default()
 
 FUNCTION_REGION = os.environ.get("FUNCTION_REGION")
 
@@ -39,7 +39,7 @@ def create_pagenate_task(schedule_timestamp, function_invoker):
     parent = client.queue_path(PROJECT_ID, FUNCTION_REGION, queue)
 
     task = {
-        "name": "{}_paginate".format(FUNCTION_NAME),
+        "name": "{}/tasks/{}_paginate".format(parent, FUNCTION_NAME),
         "schedule_time": timestamp_pb2 \
                 .Timestamp() \
                 .FromDatetime(
@@ -55,7 +55,7 @@ def create_pagenate_task(schedule_timestamp, function_invoker):
                 "Content-Type": "application/json",
             },
             "body": json.dumps({
-                "is_final": True,
+                "is_paginate": False,
             }).encode(),
         },
     }
