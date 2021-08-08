@@ -42,7 +42,7 @@ def create_pagenate_task(schedule_timestamp, function_invoker):
         "schedule_time": timestamp_pb2 \
                 .Timestamp() \
                 .FromDatetime(
-                    datetime.fromisoformat(schedule_time)
+                    datetime.fromisoformat(schedule_timestamp)
                 ),
         "http_request": {  # Specify the type of request.
             "http_method": "POST",
