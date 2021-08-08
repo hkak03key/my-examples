@@ -15,5 +15,6 @@ module "google_cloudfunctions_paginate" {
 
   depends_on = [
     google_project_service.services,
+    google_app_engine_application.app,
   ]
 }
