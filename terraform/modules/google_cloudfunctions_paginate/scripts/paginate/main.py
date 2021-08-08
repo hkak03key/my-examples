@@ -24,7 +24,8 @@ def main(request):
 
     if not is_final:
         res = gcp.create_pagenate_task(
-            (datetime.utcnow() + timedelta(minutes=1)).isoformat()
+            (datetime.utcnow() + timedelta(minutes=1)).isoformat(),
+            os.environ.get("FUNCTION_INVOKER")
         )
     pprint(res)
 
