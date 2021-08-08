@@ -1,5 +1,6 @@
 resource "google_project_service" "services" {
   for_each = toset([
+    "appengine.googleapis.com",
     "calendar-json.googleapis.com",
     "cloudfunctions.googleapis.com",
     "cloudscheduler.googleapis.com",
