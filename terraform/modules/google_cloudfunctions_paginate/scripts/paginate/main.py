@@ -27,7 +27,7 @@ def main(request):
             (datetime.utcnow() + timedelta(minutes=1)).isoformat(),
             os.environ.get("FUNCTION_INVOKER")
         )
-    pprint(res)
+        pprint(res)
 
     return escape("complated")
 
