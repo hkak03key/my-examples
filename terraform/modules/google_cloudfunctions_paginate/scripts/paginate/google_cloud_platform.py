@@ -32,18 +32,20 @@ def get_self_url():
     return "https://{}-{}.cloudfunctions.net/{}".format(FUNCTION_REGION, PROJECT_ID, FUNCTION_NAME)
 
 
-def create_pagenate_task(schedule_timestamp, function_invoker):
+def create_pagenate_task(schedule_datetime_str, function_invoker):
     client = tasks.CloudTasksClient()
 
     queue = FUNCTION_NAME
     parent = client.queue_path(PROJECT_ID, FUNCTION_REGION, queue)
 
+    schedule_datetime = datetime.fromisoformat(schedule_datetime_str)
+
     task = {
-        "name": "{}/tasks/{}_paginate".format(parent, FUNCTION_NAME),
+        "name": "{}/tasks/{}_paginate_{}".format(parent, FUNCTION_NAME, int(schedule_datetime.timestamp())),
         "schedule_time": timestamp_pb2 \
                 .Timestamp() \
                 .FromDatetime(
-                    datetime.fromisoformat(schedule_timestamp)
+                    schedule_datetime
                 ),
         "http_request": {  # Specify the type of request.
             "http_method": "POST",
