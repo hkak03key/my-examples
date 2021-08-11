@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import requests
 
 import google.auth
 from google.cloud import tasks_v2 as tasks
