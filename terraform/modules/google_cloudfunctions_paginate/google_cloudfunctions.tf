@@ -49,8 +49,7 @@ resource "google_cloudfunctions_function" "this" {
   entry_point           = "main"
 
   environment_variables = {
-    FUNCTION_REGION  = local.region
-    FUNCTION_INVOKER = google_service_account.this.email
+    PAGINATE_QUEUE_PATH = google_cloud_tasks_queue.this.id
   }
 }
 
