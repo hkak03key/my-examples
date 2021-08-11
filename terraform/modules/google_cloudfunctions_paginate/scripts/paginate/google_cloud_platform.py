@@ -17,48 +17,76 @@ def get_self_service_account_email():
     return response.text
 
 
-def get_self_project_id():
-    _, project_id = google.auth.default()
-    return project_id
+def get_project_id():
+    if not "PROJECT_ID" in globals():
+        global PROJECT_ID
+        _, PROJECT_ID = google.auth.default()
+    return PROJECT_ID
 
 
-def get_self_region():
-    response = requests.get("http://metadata.google.internal/computeMetadata/v1/instance/zone",
-    headers={"Metadata-Flavor": "Google"})
+def get_service_account_email():
+    if not "SERVICE_ACCOUNT_EMAIL" in globals():
+        global SERVICE_ACCOUNT_EMAIL
+        response = requests.get(
+            "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email",
+            headers={"Metadata-Flavor": "Google"}
+        )
+        SERVICE_ACCOUNT_EMAIL = response.text
 
-    re_search = re.search(r"projects/(?P<project_num>[0-9]+)/zones/(?P<zone>.+)", response.text)
-    zone = re_search.group("zone")
-
-    re_search = re.search(r"^(?P<region>[a-zA-Z]+-[a-zA-Z0-9]+)", zone)
-    region = re_search.group("region")
-    return region
-
-
-def get_self_function_name():
-    function_name = os.environ.get("K_SERVICE")
-    if not function_name:
-        function_name = os.environ.get("FUNCTION_NAME")
-    return function_name
+    return SERVICE_ACCOUNT_EMAIL
 
 
-def get_self_url():
-    if os.environ.get("FUNCTION_SIGNATURE_TYPE") != "http":
-        return None
+def get_function_region():
+    if not "FUNCTION_REGION" in globals():
+        global FUNCTION_REGION
+        response = requests.get(
+            "http://metadata.google.internal/computeMetadata/v1/instance/zone",
+            headers={"Metadata-Flavor": "Google"}
+        )
 
-    project_id = get_self_project_id()
-    if not project_id:
-        return None
+        re_search = re.search(r"projects/(?P<project_num>[0-9]+)/zones/(?P<zone>.+)", response.text)
+        zone = re_search.group("zone")
 
-    region = get_self_region()
-    if not region:
-        return None
+        re_search = re.search(r"^(?P<region>[a-zA-Z]+-[a-zA-Z0-9]+)", zone)
+        FUNCTION_REGION = re_search.group("region")
 
-    function_name = get_self_function_name()
-    if not function_name:
-        return None
+    return FUNCTION_REGION
 
-    return "https://{}-{}.cloudfunctions.net/{}".format(region, project_id, function_name)
 
+def get_function_name():
+    if not "FUNCTION_NAME" in globals():
+        global FUNCTION_NAME
+        FUNCTION_NAME = os.environ.get("K_SERVICE")
+        if not FUNCTION_NAME:
+            FUNCTION_NAME = os.environ.get("FUNCTION_NAME")
+    return FUNCTION_NAME
+
+
+def get_function_url():
+    if not "FUNCTION_URL" in globals():
+        global FUNCTION_URL
+        if os.environ.get("FUNCTION_SIGNATURE_TYPE") != "http":
+            FUNCTION_URL = None
+            return FUNCTION_URL
+
+        project_id = get_project_id()
+        if not project_id:
+            FUNCTION_URL = None
+            return FUNCTION_URL
+
+        region = get_function_region()
+        if not region:
+            FUNCTION_URL = None
+            return FUNCTION_URL
+
+        function_name = get_function_name()
+        if not function_name:
+            FUNCTION_URL = None
+            return FUNCTION_URL
+
+        FUNCTION_URL = "https://{}-{}.cloudfunctions.net/{}".format(region, project_id, function_name)
+
+    return FUNCTION_URL
 
 def create_pagenate_task(target_queue_path, schedule_time_str, body={}):
     client = tasks.CloudTasksClient()
@@ -67,13 +95,13 @@ def create_pagenate_task(target_queue_path, schedule_time_str, body={}):
     schedule_time_pb2.FromJsonString(schedule_time_str) # FromJsonString()の戻り値はNone
 
     task = {
-        "name": "{}/tasks/{}_paginate_{}".format(target_queue_path, get_self_function_name(), re.sub(r"\D", "", schedule_time_str)),
+        "name": "{}/tasks/{}_paginate_{}".format(target_queue_path, get_function_name(), re.sub(r"\D", "", schedule_time_str)),
         "schedule_time": schedule_time_pb2,
         "http_request": {  # Specify the type of request.
             "http_method": "POST",
-            "url": get_self_url(),
+            "url": get_function_url(),
             "oidc_token": {
-                "service_account_email": get_self_service_account_email(),
+                "service_account_email": get_service_account_email(),
             },
             "headers": {
                 "Content-Type": "application/json",
