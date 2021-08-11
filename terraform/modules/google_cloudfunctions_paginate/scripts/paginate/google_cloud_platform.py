@@ -1,68 +1,87 @@
-import os
-from datetime import datetime
 import json
+import os
+import re
 
 import google.auth
 from google.cloud import tasks_v2 as tasks
 from google.protobuf import timestamp_pb2
 
 
-_, PROJECT_ID = google.auth.default()
 
-FUNCTION_REGION = os.environ.get("FUNCTION_REGION")
+def get_self_service_account_email():
+    response = requests.get(
+        "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email",
+        headers={"Metadata-Flavor": "Google"}
+    )
+    return response.text
 
-FUNCTION_NAME = os.environ.get("K_SERVICE")
-if not FUNCTION_NAME:
-    FUNCTION_NAME = os.environ.get("FUNCTION_NAME")
+
+def get_self_project_id():
+    _, project_id = google.auth.default()
+    return project_id
+
+
+def get_self_region():
+    response = requests.get("http://metadata.google.internal/computeMetadata/v1/instance/zone",
+    headers={"Metadata-Flavor": "Google"})
+
+    re_search = re.search(r"projects/(?P<project_num>[0-9]+)/zones/(?P<zone>.+)", response.text)
+    zone = re_search.group("zone")
+
+    re_search = re.search(r"^(?P<region>[a-zA-Z]+-[a-zA-Z0-9]+)", zone)
+    region = re_search.group("region")
+    return region
+
+
+def get_self_function_name():
+    function_name = os.environ.get("K_SERVICE")
+    if not function_name:
+        function_name = os.environ.get("FUNCTION_NAME")
+    return function_name
 
 
 def get_self_url():
     if os.environ.get("FUNCTION_SIGNATURE_TYPE") != "http":
         return None
 
-    if not PROJECT_ID:
+    project_id = get_self_project_id()
+    if not project_id:
         return None
 
-    if not FUNCTION_REGION:
+    region = get_self_region()
+    if not region:
         return None
 
-    if not FUNCTION_NAME:
+    function_name = get_self_function_name()
+    if not function_name:
         return None
 
-    return "https://{}-{}.cloudfunctions.net/{}".format(FUNCTION_REGION, PROJECT_ID, FUNCTION_NAME)
+    return "https://{}-{}.cloudfunctions.net/{}".format(region, project_id, function_name)
 
 
-def create_pagenate_task(schedule_datetime_str, function_invoker):
+def create_pagenate_task(target_queue_path, schedule_time_str, body={}):
     client = tasks.CloudTasksClient()
 
-    queue = FUNCTION_NAME
-    parent = client.queue_path(PROJECT_ID, FUNCTION_REGION, queue)
-
-    schedule_datetime = datetime.fromisoformat(schedule_datetime_str)
+    schedule_time_pb2 = timestamp_pb2.Timestamp()
+    schedule_time_pb2.FromJsonString(schedule_time_str) # FromJsonString()の戻り値はNone
 
     task = {
-        "name": "{}/tasks/{}_paginate_{}".format(parent, FUNCTION_NAME, int(schedule_datetime.timestamp())),
-        "schedule_time": timestamp_pb2 \
-                .Timestamp() \
-                .FromDatetime(
-                    schedule_datetime
-                ),
+        "name": "{}/tasks/{}_paginate_{}".format(target_queue_path, get_self_function_name(), re.sub(r"\D", "", schedule_time_str)),
+        "schedule_time": schedule_time_pb2,
         "http_request": {  # Specify the type of request.
             "http_method": "POST",
             "url": get_self_url(),
             "oidc_token": {
-                "service_account_email": function_invoker,
+                "service_account_email": get_self_service_account_email(),
             },
             "headers": {
                 "Content-Type": "application/json",
             },
-            "body": json.dumps({
-                "is_paginate": False,
-            }).encode(),
+            "body": json.dumps(body).encode(),
         },
     }
 
-    response = client.create_task(request={"parent": parent, "task": task})
+    response = client.create_task(request={"parent": target_queue_path, "task": task})
 
     print("Created task {}".format(response.name))
     return response

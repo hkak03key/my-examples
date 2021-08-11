@@ -6,6 +6,9 @@ from datetime import datetime, timedelta, timezone
 
 import google_cloud_platform as gcp
 
+
+PAGINATE_QUEUE_PATH = os.environ.get("PAGINATE_QUEUE_PATH")
+
 def main(request):
     """HTTP Cloud Function.
     Args:
@@ -24,10 +27,9 @@ def main(request):
 
     if is_paginate:
         res = gcp.create_pagenate_task(
-            (datetime.utcnow() + timedelta(minutes=1)).isoformat(),
-            os.environ.get("FUNCTION_INVOKER")
+            PAGINATE_QUEUE_PATH,
+            (datetime.now(timezone.utc) + timedelta(minutes=1)).isoformat()
         )
-        pprint(res)
 
     return escape("complated")
 
